@@ -25,9 +25,8 @@ type TodoDto struct {
 
 // TodoService represent the todo's usecases
 type TodoService interface {
-	Get(ctx context.Context, skip, limit int64) ([]Todo, int64, error)
+	Get(ctx context.Context, filter interface{}, skip, limit int64) ([]Todo, int64, error)
 	GetByID(ctx context.Context, id string) (*Todo, error)
-	GetByTitle(ctx context.Context, title string) (*Todo, error)
 	Update(ctx context.Context, id string, payload *TodoDto) (*Todo, error)
 	UpdateStatus(ctx context.Context, id string, isCompleted bool) (*Todo, error)
 	Create(ctx context.Context, payload *TodoDto) (*Todo, error)
@@ -36,9 +35,8 @@ type TodoService interface {
 
 // TodoRepository represent the todo's repository contract
 type TodoRepository interface {
-	Get(ctx context.Context, skip, limit int64) ([]Todo, int64, error)
+	Get(ctx context.Context, filter interface{}, skip, limit int64) ([]Todo, int64, error)
 	GetByID(ctx context.Context, id string) (*Todo, error)
-	GetByTitle(ctx context.Context, title string) (*Todo, error)
 	Update(ctx context.Context, id string, payload *TodoDto) (*Todo, error)
 	UpdateStatus(ctx context.Context, id string, isCompleted bool) (*Todo, error)
 	Create(ctx context.Context, payload *TodoDto) (*Todo, error)

@@ -21,18 +21,13 @@ func (s *todoService) Delete(ctx context.Context, id string) error {
 }
 
 // Get implements domain.TodoService.
-func (s *todoService) Get(ctx context.Context, skip int64, limit int64) ([]domain.Todo, int64, error) {
-	return s.todoRepo.Get(ctx, skip, limit)
+func (s *todoService) Get(ctx context.Context, filter interface{}, skip int64, limit int64) ([]domain.Todo, int64, error) {
+	return s.todoRepo.Get(ctx, filter, skip, limit)
 }
 
 // GetByID implements domain.TodoService.
 func (s *todoService) GetByID(ctx context.Context, id string) (*domain.Todo, error) {
 	return s.todoRepo.GetByID(ctx, id)
-}
-
-// GetByTitle implements domain.TodoService.
-func (s *todoService) GetByTitle(ctx context.Context, title string) (*domain.Todo, error) {
-	return s.todoRepo.GetByTitle(ctx, title)
 }
 
 // Update implements domain.TodoService.

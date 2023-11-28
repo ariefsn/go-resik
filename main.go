@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/ariefsn/go-resik/app/todo/delivery/api"
 	"github.com/ariefsn/go-resik/app/todo/repository/mongo"
@@ -72,21 +71,24 @@ func main() {
 		return c.Next()
 	})
 
-	methods := []string{
-		http.MethodGet, http.MethodPut, http.MethodDelete, http.MethodPost,
-	}
-	for _, r := range app.GetRoutes() {
-	MTD:
-		for _, m := range methods {
-			if r.Method == m {
-				logger.Info("", common.M{
-					"method": r.Method,
-					"path":   r.Path,
-				})
-				break MTD
-			}
-		}
-	}
+	// methods := []string{
+	// 	http.MethodGet, http.MethodPut, http.MethodDelete, http.MethodPost,
+	// }
+	// printed := map[string]bool{}
+	// for _, r := range app.GetRoutes() {
+	// MTD:
+	// 	for _, m := range methods {
+	// 		key := fmt.Sprintf("%s-%s", r.Method, r.Path)
+	// 		if r.Method == m && !printed[key] {
+	// 			logger.Info("", common.M{
+	// 				"method": r.Method,
+	// 				"path":   r.Path,
+	// 			})
+	// 			printed[key] = true
+	// 			break MTD
+	// 		}
+	// 	}
+	// }
 
 	addr := fmt.Sprintf("%s:%s", env.App.Host, env.App.Port)
 	app.Listen(addr)

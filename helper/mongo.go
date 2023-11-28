@@ -1,12 +1,12 @@
 package helper
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type FilterOperator string
@@ -41,7 +41,7 @@ type MongoAggregate struct {
 	Skip  *int64
 	Limit *int64
 	Sort  []MongoSort
-	Match bson.D
+	Match bson.M
 }
 
 func NewMongoAggregate() *MongoAggregate {
@@ -50,8 +50,8 @@ func NewMongoAggregate() *MongoAggregate {
 	return a
 }
 
-func (a *MongoAggregate) BuildPipe() mongo.Pipeline {
-	pipe := mongo.Pipeline{}
+func (a *MongoAggregate) BuildPipe() []bson.M {
+	pipe := []bson.M{}
 
 	// build match
 	if a.Match != nil && len(a.Match) > 0 {
@@ -60,12 +60,7 @@ func (a *MongoAggregate) BuildPipe() mongo.Pipeline {
 
 	// build sort
 	if len(a.Sort) > 0 {
-		pipe = append(pipe, bson.D{
-			bson.E{
-				Key:   "$sort",
-				Value: MongoSorting(a.Sort...),
-			},
-		})
+		pipe = append(pipe, bson.M{"$sort": MongoSorting(a.Sort...)})
 	}
 
 	// build skip
@@ -85,21 +80,18 @@ func (a *MongoAggregate) BuildPipe() mongo.Pipeline {
 	return pipe
 }
 
-func MongoPipe(aggregate MongoAggregate) mongo.Pipeline {
+func MongoPipe(aggregate MongoAggregate) []bson.M {
 	return aggregate.BuildPipe()
 }
 
-func MongoMatch(filter bson.D) bson.D {
-	return bson.D{
-		bson.E{
-			Key:   "$match",
-			Value: filter,
-		},
+func MongoMatch(filter bson.M) bson.M {
+	return bson.M{
+		"$match": filter,
 	}
 }
 
-func MongoSorting(sort ...MongoSort) bson.D {
-	s := bson.D{}
+func MongoSorting(sort ...MongoSort) bson.M {
+	s := bson.M{}
 
 	for _, v := range sort {
 		sortBy := 1
@@ -108,45 +100,26 @@ func MongoSorting(sort ...MongoSort) bson.D {
 			sortBy = -1
 		}
 
-		s = append(s, bson.E{
-			Key:   v.SortField,
-			Value: sortBy,
-		})
+		s[v.SortField] = sortBy
 	}
 
 	return s
 }
 
-func MongoSkip(skip int64) bson.D {
-	return bson.D{
-		bson.E{
-			Key:   "$skip",
-			Value: skip,
-		},
-	}
+func MongoSkip(skip int64) bson.M {
+	return bson.M{"$skip": skip}
 }
 
-func MongoLimit(limit int64) bson.D {
-	return bson.D{
-		bson.E{
-			Key:   "$limit",
-			Value: limit,
-		},
-	}
+func MongoLimit(limit int64) bson.M {
+	return bson.M{"$limit": limit}
 }
 
-func MongoFilter(operator FilterOperator, field string, value interface{}) bson.D {
+func MongoFilter(operator FilterOperator, field string, value interface{}) bson.M {
 	switch operator {
 	case FoEq, FoNe, FoIn, FoNin, FoGt, FoGte, FoLt, FoLte:
-		return bson.D{
-			bson.E{
-				Key: field,
-				Value: bson.D{
-					bson.E{
-						Key:   string(operator),
-						Value: value,
-					},
-				},
+		return bson.M{
+			field: bson.M{
+				string(operator): value,
 			},
 		}
 	case FoContains, FoStartWith, FoEndWith:
@@ -162,24 +135,15 @@ func MongoFilter(operator FilterOperator, field string, value interface{}) bson.
 			regexPattern = fmt.Sprintf("%s$", value)
 		}
 
-		return bson.D{
-			bson.E{
-				Key: field,
-				Value: primitive.Regex{
-					Pattern: regexPattern,
-					Options: regexOpt,
-				},
+		return bson.M{
+			field: primitive.Regex{
+				Pattern: regexPattern,
+				Options: regexOpt,
 			},
 		}
 	default:
 		return nil
 	}
-}
-
-func MongoFilterM(operator FilterOperator, field string, value interface{}) bson.M {
-	m, _ := ToBsonM(MongoFilter(operator, field, value))
-
-	return m
 }
 
 func BuildMongoOrders(orders string, separators ...string) []MongoSort {
@@ -231,28 +195,13 @@ type MongoLookupOptions struct {
 	As           string
 }
 
-func MongoLookup(opt MongoLookupOptions) bson.D {
-	return bson.D{
-		{
-			Key: "$lookup",
-			Value: bson.D{
-				bson.E{
-					Key:   "from",
-					Value: opt.From,
-				},
-				bson.E{
-					Key:   "localField",
-					Value: opt.LocalField,
-				},
-				bson.E{
-					Key:   "foreignField",
-					Value: opt.ForeignField,
-				},
-				bson.E{
-					Key:   "as",
-					Value: opt.As,
-				},
-			},
+func MongoLookup(opt MongoLookupOptions) bson.M {
+	return bson.M{
+		"$lookup": bson.M{
+			"from":         opt.From,
+			"localField":   opt.LocalField,
+			"foreignField": opt.ForeignField,
+			"as":           opt.As,
 		},
 	}
 }
@@ -263,70 +212,35 @@ type MongoUnwindOptions struct {
 	PreserveEmpty     bool
 }
 
-func MongoUnwind(opt MongoUnwindOptions) bson.D {
-	return bson.D{
-		bson.E{
-			Key: "$unwind",
-			Value: bson.D{
-				bson.E{
-					Key:   "path",
-					Value: opt.Path,
-				},
-				// bson.E{
-				// 	Key:   "includeArrayIndex",
-				// 	Value: opt.IncludeArrayIndex,
-				// },
-				bson.E{
-					Key:   "preserveNullAndEmptyArrays",
-					Value: opt.PreserveEmpty,
-				},
-			},
+func MongoUnwind(opt MongoUnwindOptions) bson.M {
+	return bson.M{
+		"$unwind": bson.M{
+			"path":                       opt.Path,
+			"preserveNullAndEmptyArrays": opt.PreserveEmpty,
+			// "includeArrayIndex": opt.IncludeArrayIndex,
 		},
 	}
 }
 
-func MongoIn(field string, inValues ...interface{}) bson.D {
-	return bson.D{
-		bson.E{
-			Key: field,
-			Value: bson.D{
-				bson.E{
-					Key:   "$in",
-					Value: inValues,
-				},
-			},
+func MongoIn(field string, inValues ...interface{}) bson.M {
+	return bson.M{
+		field: bson.M{
+			"$in": inValues,
 		},
 	}
 }
 
-func MongoSet(field string, value interface{}) bson.D {
-	return bson.D{
-		bson.E{
-			Key: "$set",
-			Value: bson.D{
-				bson.E{
-					Key:   field,
-					Value: value,
-				},
-			},
-		},
+func MongoSet(data bson.M) bson.M {
+	return bson.M{
+		"$set": data,
 	}
 }
 
-func MongoUnionWith(collection string, pipelines []bson.D) bson.D {
-	return bson.D{
-		bson.E{
-			Key: "$unionWith",
-			Value: bson.D{
-				bson.E{
-					Key:   "coll",
-					Value: collection,
-				},
-				bson.E{
-					Key:   "pipeline",
-					Value: pipelines,
-				},
-			},
+func MongoUnionWith(collection string, pipelines []bson.M) bson.M {
+	return bson.M{
+		"$unionWith": bson.M{
+			"coll":     collection,
+			"pipeline": pipelines,
 		},
 	}
 }
@@ -340,54 +254,32 @@ type MongoGraphLookupOptions struct {
 	As               string
 }
 
-func MongoGraphLookup(opt MongoGraphLookupOptions) bson.D {
-	return bson.D{
-		{
-			Key: "$graphLookup",
-			Value: bson.D{
-				bson.E{
-					Key:   "from",
-					Value: opt.From,
-				},
-				bson.E{
-					Key:   "startWith",
-					Value: opt.StartWith,
-				},
-				bson.E{
-					Key:   "connectFromField",
-					Value: opt.ConnectFromField,
-				},
-				bson.E{
-					Key:   "connectToField",
-					Value: opt.ConnectToField,
-				},
-				bson.E{
-					Key:   "depthField",
-					Value: opt.DepthField,
-				},
-				bson.E{
-					Key:   "as",
-					Value: opt.As,
-				},
-			},
+func MongoGraphLookup(opt MongoGraphLookupOptions) bson.M {
+	return bson.M{
+		"$graphLookup": bson.M{
+			"from":             opt.From,
+			"startWith":        opt.StartWith,
+			"connectFromField": opt.ConnectFromField,
+			"connectToField":   opt.ConnectToField,
+			"depthField":       opt.DepthField,
+			"as":               opt.As,
 		},
 	}
 }
 
-func MongoDateToString(field, format string) bson.D {
-	return bson.D{
-		{
-			Key: "$dateToString",
-			Value: bson.D{
-				{
-					Key:   "format",
-					Value: format,
-				},
-				{
-					Key:   "date",
-					Value: field,
-				},
-			},
+func MongoDateToString(field, format string) bson.M {
+	return bson.M{
+		"$dateToString": bson.M{
+			"date":   field,
+			"format": format,
 		},
 	}
+}
+
+func ParseMongoError(err error) error {
+	if strings.Contains(err.Error(), "no documents in result") {
+		return errors.New("no document found")
+	}
+
+	return nil
 }
