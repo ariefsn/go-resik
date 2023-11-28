@@ -25,3 +25,15 @@ func ToBsonM(data interface{}) (bson.M, error) {
 
 	return bsonM, nil
 }
+
+func ToBsonD(v interface{}) (doc *bson.D, err error) {
+	data, err := bson.Marshal(v)
+
+	if err != nil {
+		return
+	}
+
+	err = bson.Unmarshal(data, &doc)
+
+	return
+}

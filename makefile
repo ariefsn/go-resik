@@ -9,3 +9,17 @@ install.deps:
 
 dev.hot:
 	air -c .air.toml
+
+mock.repository:
+	cd ./domain && mockery \
+	--name ${app}Repository \
+	--filename $(shell echo ${app} | tr '[:upper:]' '[:lower:]')_repository.go \
+	--outpkg mocks \
+	--structname "${app}Repository"
+
+mock.service:
+	cd ./domain && mockery \
+	--name ${app}Service \
+	--filename $(shell echo ${app} | tr '[:upper:]' '[:lower:]')_service.go \
+	--outpkg mocks \
+	--structname "${app}Service"
