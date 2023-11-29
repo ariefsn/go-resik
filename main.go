@@ -22,8 +22,10 @@ func main() {
 	env := helper.Env()
 
 	// Setup db
-	client, _ := helper.MongoClient()
-	db := client.Database("resik-arch")
+	dbEnv := env.Mongo
+	dbAddress := fmt.Sprintf("mongodb://%s:%s@%s:%s", dbEnv.User, dbEnv.Password, dbEnv.Host, dbEnv.Port)
+	client, _ := helper.MongoClient(dbAddress)
+	db := client.Database(dbEnv.Db)
 
 	// Setup Repositories
 	todoRepo := mongo.NewMongoTodoRepository(db)
@@ -38,24 +40,7 @@ func main() {
 
 	app.Use(fiberLogger.New(fiberLogger.Config{
 		Format: "[${time}] ${status} - ${latency} ${method} ${path}\n",
-		Done: func(c *fiber.Ctx, logString []byte) {
-			// fmt.Printf("[OUTBOUND] %s", string(logString))
-			// logger.Info("[OUTBOUND]", common.M{
-			// 	"path":   c.Path(),
-			// 	"method": c.Method(),
-			// 	"host":   string(c.Request().Host()),
-			// 	"status": c.Response().StatusCode(),
-			// 	"time":   time.Now(),
-			// })
-		},
 	}))
-
-	// app.Use(func(c *fiber.Ctx) error {
-	// 	logger.Info("[INBOUND]", common.M{
-	// 		"path": c.Path(),
-	// 	})
-	// 	return c.Next()
-	// })
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(helper.JsonSuccess("OK"))
@@ -70,25 +55,6 @@ func main() {
 		})
 		return c.Next()
 	})
-
-	// methods := []string{
-	// 	http.MethodGet, http.MethodPut, http.MethodDelete, http.MethodPost,
-	// }
-	// printed := map[string]bool{}
-	// for _, r := range app.GetRoutes() {
-	// MTD:
-	// 	for _, m := range methods {
-	// 		key := fmt.Sprintf("%s-%s", r.Method, r.Path)
-	// 		if r.Method == m && !printed[key] {
-	// 			logger.Info("", common.M{
-	// 				"method": r.Method,
-	// 				"path":   r.Path,
-	// 			})
-	// 			printed[key] = true
-	// 			break MTD
-	// 		}
-	// 	}
-	// }
 
 	addr := fmt.Sprintf("%s:%s", env.App.Host, env.App.Port)
 	app.Listen(addr)

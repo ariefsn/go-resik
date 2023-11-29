@@ -11,8 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func MySqlClient() *sql.DB {
-	db, err := sql.Open("mysql", "root:Password.123@localhost/resik-arch")
+func MySqlClient(address string) *sql.DB {
+	db, err := sql.Open("mysql", address)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -23,9 +23,9 @@ func MySqlClient() *sql.DB {
 	return db
 }
 
-func MongoClient() (client *mongo.Client, cancel context.CancelFunc) {
+func MongoClient(address string) (client *mongo.Client, cancel context.CancelFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://root:Password.123@localhost:27017"))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(address))
 	if err != nil {
 		logger.Fatal(err)
 	}

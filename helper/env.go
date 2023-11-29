@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/ariefsn/go-resik/logger"
 	"github.com/joho/godotenv"
@@ -16,13 +15,19 @@ type envApp struct {
 	Port string
 }
 
-type env struct {
-	App  envApp
-	Mode string
+type envDb struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Db       string
 }
 
-func (e *env) IsDebug() bool {
-	return strings.ToLower(e.Mode) == "debug"
+type env struct {
+	App   envApp
+	Debug bool
+	Mongo envDb
+	Mysql envDb
 }
 
 type envValue struct {
@@ -80,7 +85,21 @@ func InitEnv(envFile ...string) {
 			Host: fromEnv("APP_HOST", "0.0.0.0").String(),
 			Port: fromEnv("APP_PORT", "6001").String(),
 		},
-		Mode: fromEnv("MODE", "DEBUG").String(),
+		Debug: fromEnv("Debug", true).Bool(),
+		Mongo: envDb{
+			Host:     fromEnv("MONGO_HOST").String(),
+			Port:     fromEnv("MONGO_PORT").String(),
+			User:     fromEnv("MONGO_USER").String(),
+			Password: fromEnv("MONGO_PASSWORD").String(),
+			Db:       fromEnv("MONGO_DB").String(),
+		},
+		Mysql: envDb{
+			Host:     fromEnv("MYSQL_HOST").String(),
+			Port:     fromEnv("MYSQL_PORT").String(),
+			User:     fromEnv("MYSQL_USER").String(),
+			Password: fromEnv("MYSQL_PASSWORD").String(),
+			Db:       fromEnv("MYSQL_DB").String(),
+		},
 	}
 }
 
