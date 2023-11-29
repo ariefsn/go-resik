@@ -277,6 +277,10 @@ func MongoDateToString(field, format string) bson.M {
 }
 
 func ParseMongoError(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	if strings.Contains(err.Error(), "no documents in result") {
 		return errors.New("no document found")
 	}

@@ -72,7 +72,7 @@ func fromEnv(key string, fallback ...interface{}) envValue {
 func InitEnv(envFile ...string) {
 	err := godotenv.Load(envFile...)
 	if err != nil {
-		logger.Error(err)
+		logger.Warning(err.Error())
 	}
 	_env = &env{
 		App: envApp{
