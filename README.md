@@ -25,8 +25,28 @@
 - helper
 - logger
 
-## How to run
+## How to
 
-```go
-  go run main.go
-```
+1. Copy `.env.example` to `.env` and adjust the variables
+2. Start the app
+   - Run
+
+       ```shell
+         make run
+       ```
+
+   - Build
+
+       ```shell
+         make build
+       ```
+
+   - Build and Run
+
+       ```shell
+         make build.run
+       ```
+
+## Reff
+
+- [Clean Architecture by Uncle Bob](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)

@@ -23,3 +23,12 @@ mock.service:
 	--filename $(shell echo ${app} | tr '[:upper:]' '[:lower:]')_service.go \
 	--outpkg mocks \
 	--structname "${app}Service"
+
+run:
+	go run main.go
+
+build:
+	go build -o main .
+
+build.run:
+	go build -o main . && ./main
