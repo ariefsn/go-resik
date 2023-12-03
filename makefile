@@ -32,3 +32,12 @@ build:
 
 build.run:
 	go build -o main . && ./main
+
+test.coverage.html:
+	go test ./app/... -coverprofile=cover.out && go tool cover -html=cover.out -o coverage.html
+
+test.coverage.func:
+	go test ./app/... -coverprofile=cover.out && go tool cover -func=cover.out -o coverage.html
+
+test.coverage:
+	go test ./app/... -race -v -coverprofile=cover.out && ./scripts/coverage.sh cover.out ${threshold}

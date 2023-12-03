@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/ariefsn/go-resik/common"
@@ -41,7 +40,7 @@ func (a *TodoApi) Create(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(helper.JsonError(err))
 	}
 
-	res, err := a.todoSvc.Create(c.Context(), &payload)
+	res, err := a.todoSvc.Create(c.UserContext(), &payload)
 
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(helper.JsonError(err))
@@ -53,14 +52,7 @@ func (a *TodoApi) Create(c *fiber.Ctx) error {
 func (a *TodoApi) GetByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	if id == "" {
-		err := errors.New("id is required")
-		logger.Error(err)
-
-		return c.Status(http.StatusBadRequest).JSON(helper.JsonError(err))
-	}
-
-	res, err := a.todoSvc.GetByID(c.Context(), id)
+	res, err := a.todoSvc.GetByID(c.UserContext(), id)
 
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(helper.JsonError(err))
@@ -86,7 +78,7 @@ func (a *TodoApi) Get(c *fiber.Ctx) error {
 		filter["description"] = description
 	}
 
-	res, total, err := a.todoSvc.Get(c.Context(), filter, int64(skip), int64(limit))
+	res, total, err := a.todoSvc.Get(c.UserContext(), filter, int64(skip), int64(limit))
 
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(helper.JsonError(err))
@@ -103,19 +95,12 @@ func (a *TodoApi) Update(c *fiber.Ctx) error {
 
 	id := c.Params("id")
 
-	if id == "" {
-		err := errors.New("id is required")
-		logger.Error(err)
-
-		return c.Status(http.StatusBadRequest).JSON(helper.JsonError(err))
-	}
-
 	if err := c.BodyParser(&payload); err != nil {
 		logger.Error(err)
 		return c.Status(http.StatusBadRequest).JSON(helper.JsonError(err))
 	}
 
-	res, err := a.todoSvc.Update(c.Context(), id, &payload)
+	res, err := a.todoSvc.Update(c.UserContext(), id, &payload)
 
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(helper.JsonError(err))
@@ -131,19 +116,12 @@ func (a *TodoApi) UpdateStatus(c *fiber.Ctx) error {
 
 	id := c.Params("id")
 
-	if id == "" {
-		err := errors.New("id is required")
-		logger.Error(err)
-
-		return c.Status(http.StatusBadRequest).JSON(helper.JsonError(err))
-	}
-
 	if err := c.BodyParser(&payload); err != nil {
 		logger.Error(err)
 		return c.Status(http.StatusBadRequest).JSON(helper.JsonError(err))
 	}
 
-	res, err := a.todoSvc.UpdateStatus(c.Context(), id, payload.IsCompleted)
+	res, err := a.todoSvc.UpdateStatus(c.UserContext(), id, payload.IsCompleted)
 
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(helper.JsonError(err))
@@ -155,14 +133,7 @@ func (a *TodoApi) UpdateStatus(c *fiber.Ctx) error {
 func (a *TodoApi) Delete(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	if id == "" {
-		err := errors.New("id is required")
-		logger.Error(err)
-
-		return c.Status(http.StatusBadRequest).JSON(helper.JsonError(err))
-	}
-
-	err := a.todoSvc.Delete(c.Context(), id)
+	err := a.todoSvc.Delete(c.UserContext(), id)
 
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(helper.JsonError(err))
